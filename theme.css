@@ -121,4 +121,7 @@ input[type='file'] {
   text-align: center;
   transition: width 0.22s;
   width: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
