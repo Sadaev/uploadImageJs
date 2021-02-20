@@ -7,16 +7,23 @@ function bytesToSize(bytes) {
     return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i]
  }
 
+ const element = (tag, classes = [], content) => {
+    const node = document.createElement(tag)
+    if(classes.length){
+        node.classList.add(...classes)
+    }
+    if(content){
+        node.textContent = content
+    }
+ }
+
 
 export function upload(selector, options = {}){
+    let files = []
     const input = document.querySelector(selector)
-    const preview = document.createElement('div')
-    preview.classList.add('preview')
-
-
-    const open = document.createElement('button')
-    open.classList.add('btn')
-    open.textContent = 'Открыть'
+    const preview = element('div', ['preview'])
+    const open = element('button', ['btn'], 'Открыть')
+    const upload = element('button', ['btn','primary'], 'Загрузить')
 
     if(options.multi){
         input.setAttribute('multiple', true)
@@ -27,10 +34,8 @@ export function upload(selector, options = {}){
     }
 
     input.insertAdjacentElement('afterend', preview)
+    input.insertAdjacentElement('afterend', upload)
     input.insertAdjacentElement('afterend', open)
-
-
-
 
     const triggerInput = () => input.click()
 
@@ -38,24 +43,18 @@ export function upload(selector, options = {}){
         if(!event.target.files.length){
             return 
         }
-
-        const files = Array.from(event.target.files)
-        
+        files = Array.from(event.target.files)
         preview.innerHTML = ''
-
         files.forEach(file => {
             if(!file.type.match('image')){
                 return
             }
-        
-
             const reader = new FileReader()
-
             reader.onload = ev => {
                 const src = ev.target.result
                 preview.insertAdjacentHTML('afterbegin', `
                     <div class="preview-image">
-                        <div class="preview-remove">&times;</div>
+                        <div class="preview-remove" data-name="${file.name}">&times;</div>
                         <img src="${src}" alt="${file.name}"/>
                         <div class="preview-info">
                             <span>test.jpg</span>
@@ -64,12 +63,25 @@ export function upload(selector, options = {}){
                     </div>
                 `)
             }
-
             reader.readAsDataURL(file)
         })
+    }
+
+    const removeHandler = event => {
+        if(!event.target.dataset.name){
+            return
+        }
+        const {name} = event.target.dataset
+        files = files.filter(file => file.name !== name)
         
+        const block = preview
+        .querySelector(`[data-name="${name}"]`).closest('.preview-image')
+
+        block.classList.add('removing')
+        setTimeout(() => block.remove(), 300);
     }
 
     open.addEventListener('click', triggerInput)
     input.addEventListener('change', changeHandler)
+    preview.addEventListener('click', removeHandler)
 }
